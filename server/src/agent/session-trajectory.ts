@@ -812,11 +812,63 @@ function projectGrokTrajectory(
   return createTrajectory("grok", file, records, steps);
 }
 
+function projectWeaverTrajectory(
+  file: SessionFile,
+  records: Record<string, unknown>[],
+) {
+  const steps: Omit<AtifStep, "step_id">[] = [];
+  for (const record of records) {
+    const kind = stringValue(record.kind);
+    if (
+      ["user_text", "assistant_text", "assistant_instruction"].includes(kind)
+    ) {
+      steps.push({
+        source:
+          kind === "user_text"
+            ? "user"
+            : kind === "assistant_text"
+              ? "agent"
+              : "system",
+        message: stringValue(record.text),
+        extra: { record_type: kind, timestamp_unavailable: true },
+      });
+    } else if (kind === "tool_call") {
+      const name = stringValue(record.name) || "tool";
+      steps.push({
+        source: "agent",
+        message: `Tool call: ${name}`,
+        tool_calls: [
+          {
+            tool_call_id: stringValue(record.id),
+            function_name: name,
+            arguments: toolArguments(record.args),
+          },
+        ],
+      });
+    } else if (kind === "tool_result") {
+      steps.push({
+        source: "system",
+        message: "Tool result",
+        observation: {
+          results: [
+            {
+              source_call_id: stringValue(record.id),
+              content: stringValue(record.output),
+            },
+          ],
+        },
+      });
+    }
+  }
+  return createTrajectory("weaver", file, records, steps);
+}
+
 export function projectAgentTrajectory(
   agent: string,
   file: SessionFile,
   records: Record<string, unknown>[],
 ) {
+  if (agent === "weaver") return projectWeaverTrajectory(file, records);
   if (agent === "codex") return projectCodexTrajectory(file, records);
   if (agent === "claude") return projectClaudeTrajectory(file, records);
   if (agent === "kimi") return projectKimiTrajectory(file, records);

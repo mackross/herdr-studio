@@ -352,3 +352,31 @@ describe("last-step turn tracking", () => {
     expect(errors).toEqual(["w1: snapshot failed"]);
   });
 });
+
+test("Weaver Last step uses status edges without requiring transcript support", async () => {
+  const transitions: string[] = [];
+  const tracker = createLastStepTurnTracker({
+    captureWorkspaceBaseline: async () => {
+      transitions.push("capture");
+    },
+    completeWorkspaceStep: async () => {
+      transitions.push("complete");
+    },
+  });
+  tracker.reconcilePaneList({
+    panes: [
+      {
+        pane_id: "weaver-pane",
+        workspace_id: "w1",
+        agent: "weaver",
+        agent_status: "idle",
+      },
+    ],
+  });
+  tracker.handleHerdrEvent(status("weaver-pane", "w1", "working"));
+  await flushTransitions();
+  tracker.handleHerdrEvent(status("weaver-pane", "w1", "idle"));
+  await flushTransitions();
+  expect(transitions).toEqual(["capture", "complete"]);
+  await tracker.stop();
+});

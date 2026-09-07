@@ -1,6 +1,8 @@
 name: CI
 
 on:
+    push:
+        branches: [weaver-session-support]
     pull_request:
     # Prepare Release uses this explicit dispatch because events created with its
     # GITHUB_TOKEN do not start other workflows automatically.

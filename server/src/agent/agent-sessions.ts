@@ -237,7 +237,11 @@ export async function downloadAgentSessionFile(
   return new Response(body, {
     headers: {
       "content-type": "application/x-ndjson; charset=utf-8",
-      "content-length": String(resolved.file.size ?? 0),
+      "content-length": String(
+        typeof body === "string"
+          ? Buffer.byteLength(body)
+          : (resolved.file.size ?? 0),
+      ),
       "content-disposition": contentDispositionFilename(resolved.file.path),
       "x-agent-session-path": encodeURIComponent(resolved.file.path),
     },

@@ -84,7 +84,7 @@ export const PLATFORM_ASSETS: Record<
   "win32-x64": { asset: "herdr-gui-windows-x64", binary: "herdr-gui.exe" },
 };
 
-const RELEASE_REPOSITORY = "powerfooI/herdr-studio";
+const RELEASE_REPOSITORY = "mackross/herdr-studio";
 
 export function releaseAssetFor(
   platform: string,

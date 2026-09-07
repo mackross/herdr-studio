@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add local Weaver session History, tool inspection, and selected-session JSONL/ATIF export.
+- Keep fork binary updates on mackross/herdr-studio.
+
 ### Changed
 
 - Count only conversation messages toward the 200-entry History window so
