@@ -168,6 +168,15 @@ async function sessionFileFor(
   files: AgentSessionFileAccess,
   context: AgentSessionResolverContext,
 ) {
+  if (agent === "weaver") {
+    if (files.remote)
+      throw new Error(
+        "Weaver session inspection currently supports local connections only",
+      );
+    if (session.kind !== "id")
+      throw new Error("Weaver requires a native session ID");
+    return files.findWeaverSession?.(session.value, cwd) ?? null;
+  }
   if (agent === "grok") {
     const descriptor =
       session.kind === "path"
@@ -230,10 +239,11 @@ export async function resolveAgentSession(
     agent !== "claude" &&
     agent !== "kimi" &&
     agent !== "grok" &&
-    agent !== "pi"
+    agent !== "pi" &&
+    agent !== "weaver"
   ) {
     throw new Error(
-      `agent session only supports codex, claude, kimi, grok, and pi`,
+      `agent session only supports codex, claude, kimi, grok, pi, and weaver`,
     );
   }
   // Native session files follow the agent process, which may have been
@@ -267,12 +277,16 @@ export async function resolveAgentSession(
       ...base,
       status: "missing_session",
       detail:
-        agent === "grok"
-          ? cwd
-            ? `No local Grok Build session was found for ${cwd}. Start Grok Build in this directory, then refresh Session Inspect.`
-            : "Herdr did not report a working directory for this Grok Build pane."
-          : "Herdr has not received an agent session id for this pane. Install the Herdr integration for this agent and start a new agent session.",
-      command: agent === "grok" ? undefined : integrationInstallCommand(agent),
+        agent === "weaver"
+          ? "Weaver has not reported its native session ID. Start Weaver inside this Herdr pane, then refresh."
+          : agent === "grok"
+            ? cwd
+              ? `No local Grok Build session was found for ${cwd}. Start Grok Build in this directory, then refresh Session Inspect.`
+              : "Herdr did not report a working directory for this Grok Build pane."
+            : "Herdr has not received an agent session id for this pane. Install the Herdr integration for this agent and start a new agent session.",
+      command: ["grok", "weaver"].includes(agent)
+        ? undefined
+        : integrationInstallCommand(agent),
       updated_at: new Date(0).toISOString(),
       path: "",
       session: null,

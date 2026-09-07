@@ -1,3 +1,4 @@
+import { withWeaverSessions } from "./weaver-session";
 import { stat } from "node:fs/promises";
 import { sshCommandArgv } from "../bridge/ssh-command";
 import type { SessionFile } from "./session-types";
@@ -11,6 +12,7 @@ type RunBinaryProcessWithTimeout = (
 
 export type AgentSessionFileAccess = {
   remote: boolean;
+  findWeaverSession?(id: string, cwd: string): Promise<SessionFile | null>;
   statFile(path: string): Promise<SessionFile | null>;
   readText(path: string): Promise<string>;
   readPrefix(path: string, byteLimit: number): Promise<Uint8Array>;
@@ -34,7 +36,7 @@ async function localSessionFile(path: string): Promise<SessionFile | null> {
   }
 }
 
-export const localAgentSessionFiles: AgentSessionFileAccess = {
+const localFiles: AgentSessionFileAccess = {
   remote: false,
   statFile: localSessionFile,
   readText: (path) => Bun.file(path).text(),
@@ -50,6 +52,8 @@ export const localAgentSessionFiles: AgentSessionFileAccess = {
     return null;
   },
 };
+
+export const localAgentSessionFiles = withWeaverSessions(localFiles);
 
 function parseRemoteFileMetadata(stdout: string): SessionFile | null {
   const [rawSize, rawMtime, rawPath, identity, changeToken] = stdout
@@ -69,7 +73,7 @@ export function createAgentSessionFileAccess(args: {
   runBinaryProcessWithTimeout: RunBinaryProcessWithTimeout;
   shQuote: (value: string) => string;
 }): AgentSessionFileAccess {
-  if (!args.sshHost) return localAgentSessionFiles;
+  if (!args.sshHost) return withWeaverSessions(localFiles);
   const host = args.sshHost;
 
   async function runRemote(command: string) {

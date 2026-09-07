@@ -1,5 +1,8 @@
 # Herdr Studio
 
+This is the [mackross fork](https://github.com/mackross/herdr-studio), adding
+[local Weaver session support](./docs/WEAVER-FORK.md).
+
 A minimal **web client** for [Herdr](https://herdr.dev). It connects to a
 running Herdr server through its local socket API and provides a browser and PWA
 dashboard for workspaces, tabs, panes, terminals, agents, files, and diffs.
